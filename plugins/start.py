@@ -80,8 +80,6 @@ async def start(bot, cmd):
       await bot.send_message(
           chat_id = cmd.chat.id,
           text = Translation.START_TEXT.format(cmd.from_user.first_name), 
-          reply_to_message_id = cmd.message_id,
-          parse_mode = "markdown",
           disable_web_page_preview = True, 
           reply_markup = start_button
       )
@@ -91,9 +89,7 @@ async def start(bot, cmd):
 async def help(bot, cmd):
       await bot.send_message(
           chat_id = cmd.chat.id,
-          text = Translation.HELP_TEXT, 
-          reply_to_message_id = cmd.message_id,
-          parse_mode = "html",
+          text = Translation.HELP_TEXT,
           disable_web_page_preview = True,
           reply_markup = help_button           
       )
@@ -104,8 +100,6 @@ async def about(bot, cmd):
       await bot.send_message(
           chat_id = cmd.chat.id,
           text = Translation.ABOUT_TEXT, 
-          reply_to_message_id = cmd.message_id,
-          parse_mode = "markdown",
           disable_web_page_preview = True, 
           reply_markup = about_button
       )
@@ -115,9 +109,7 @@ async def about(bot, cmd):
 async def about(bot, cmd):
       await bot.send_message(
           chat_id = cmd.chat.id,
-          text = Translation.SOURCE_TEXT, 
-          reply_to_message_id = cmd.message_id,
-          parse_mode = "html",
+          text = Translation.SOURCE_TEXT,
           disable_web_page_preview = True, 
           reply_markup = source_button
       )      
@@ -129,7 +121,7 @@ async def media_replace(client, message):
              "\n\n🌀Send The Link Of The Media That Will Be Replaced/Edited\nNB: Note both you & the bot " \
              "must be an admin in the targert channel",
         disable_web_page_preview=True,
-        reply_to_message_id=message.message_id
+        
     )    
 
 # media replace
