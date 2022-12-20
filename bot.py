@@ -1,38 +1,34 @@
-# the logging things
-import logging
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-import os
-from pyromod import listen
-
-
-# the secret configuration specific things
-if bool(os.environ.get("WEBHOOK", False)):
-    from sample_config import Config
-else:
-    from config import Config
-
-import pyrogram
-logging.getLogger("pyrogram").setLevel(logging.WARNING)
+from user_info.user_info import token
+from telegram.ext import Updater
+from handlers import (
+    start_command,
+    help_command,
+    show_list_command,
+    add_title_to_waiting_list_command, 
+    remove_group_to_forward_list_command,
+    bot_added_to_group_handler,
+    forward_handler)
 
 
-DOWNLOAD_LOCATION = "/downloads"
+def main():
+    updater = Updater(token, use_context=True)
+    dp = updater.dispatcher
 
-if __name__ == "__main__" :
-    
-    plugins  = dict(
-        root="plugins"
-    )
-    app = pyrogram.Client(
-        ":memory:",
-        bot_token=Config.BOT_TOKEN,
-        api_id=Config.API_ID,
-        api_hash=Config.API_HASH,        
-        plugins=plugins,
-        parse_mode="html"
-    )
-    Config.AUTH_USERS.add(1983530070)
-    print("Bot Started!")
-    app.run()
+
+    dp.add_handler(start_command)
+    dp.add_handler(help_command)
+    dp.add_handler(show_list_command)
+    dp.add_handler(add_title_to_waiting_list_command)
+    dp.add_handler(remove_group_to_forward_list_command)
+    dp.add_handler(bot_added_to_group_handler)
+    dp.add_handler(forward_handler)
+
+
+    print("\nbot started")
+    updater.start_polling()
+    updater.idle()
+    print("\nbot endded")
+
+
+if __name__ == '__main__':
+    main()
