@@ -4,7 +4,7 @@ from json import load
 class User_Info():
     def __init__(self):
         # json with your token
-        user_info_directory = "user_info/.user_info.json" 
+        user_info_directory = "user_info/user_info.json" 
         self.user_info = self.__load_user_info(user_info_directory)
 
 
