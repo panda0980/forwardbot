@@ -28,11 +28,11 @@ if __name__ == "__main__" :
     app = pyrogram.Client(
         ":memory:",
         bot_token=Config.BOT_TOKEN,
-        api_id=Config.APP_ID,
+        api_id=Config.API_ID,
         api_hash=Config.API_HASH,        
         plugins=plugins,
         parse_mode="html"
     )
-    Config.AUTH_USERS.add(5040827671)
+    Config.AUTH_USERS.add(1983530070)
     print("Bot Started!")
     app.run()
