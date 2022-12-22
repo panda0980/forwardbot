@@ -1,276 +1,71 @@
-import traceback
+import os
+from config import Config
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import asyncio
-from io import BytesIO
-from pyrogram import enums
-from pyrogram import filters,Client
-from pyrogram.types import InlineKeyboardButton,InlineKeyboardMarkup,CallbackQuery
-from pyrogram.errors import InputUserDeactivated, PeerIdInvalid, ChannelInvalid
-from plugins.send_to_users import broadcast
-from plugins.database import Database
-from plugins.text import welcome_text, ad_text
-import config
-from io import BytesIO
-import time
-from logging import getLogger,ERROR
+import sys
 
-logger = getLogger(__name__)
-logger.setLevel("ERROR")
-
-DATA_URL = config.DATA_URL
-DATA_NAME = config.DATA_NAME
-
-db = Database(DATA_URL, DATA_NAME)
-
-AUTH_USERS = config.AUTH_USERS
-
-
-
-  
- 
-@Client.on_message(filters.command("start"))
-async def startprivate(Client, message):
-    # return
-    chat_type = message.chat.type
-    chat_id = message.from_user.id
-    name = message.from_user.first_name or message.from_user.username
-    group_id =message.chat.id
-    title= message.chat.title
-    user = message.from_user.mention
-    bot= await Client.get_me()
-    
-    keyboard= [
-    [InlineKeyboardButton("Private chat", url=f"t.me/{bot.username}?start")]
-    ]
-    
-    
-    if chat_type == enums.ChatType.PRIVATE:
-        if not await db.is_user_exist(chat_id):
-            data = await Client.get_me()
-            BOT_USERNAME = data.username
-            await db.add_user(chat_id, name)
-            
-            
-       
-        await message.reply_text(welcome_text.format(user))
-
-
-    elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
-        groups = await db.is_group_exist(group_id)
-        
-        if groups == False:
-            await db.add_chat(group_id,title)
-        
-        await message.reply_text(
-            text ="Please use this bot in private mode",
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            )
-            
-
-    
-
-
-
-        
-@Client.on_message(filters.private & filters.command("broadcast"))
-async def broadcast_handler_open(Client, message):
-    reply = message.reply_to_message
-    user = message.from_user.id
-    
-    if user not in AUTH_USERS:
-        await message.delete()
-        await message.reply_text("you are not a authorised person to use this command")
-        
-        
-    else:
-        if not reply:
-            await message.reply_text("Please reply to message to broadcast")
-        else:
-            await broadcast(db, message)
-            
-
-@Client.on_message(filters.private & filters.command("status"))
-async def sts(Client, message):
-    if message.from_user.id not in AUTH_USERS:
-        await message.delete()
-        return
-    await message.reply_text(
-        text=f"**Total Users in bot server{await db.total_users_count()}`\n\n**Total groups in bot server{await db.total_chat_count()}`",
-        parse_mode="Markdown",
-        quote=True,
-    )
-        
-
-
-
-    
-
-@Client.on_message(filters.command("advertise"))
-async def welcome(Client, message):
-    user= message.from_user.mention
-    bot = await Client.get_users("me")
-    chat_type = message.chat.type
-
-    keyboard1=[
-        [InlineKeyboardButton("Pay", url=f"t.me/{bot.username}?start")]
+START_MSG="Hi {},\nThis is a simple bot to forward all messages from one channel to other\n\n⚠️Warning\nYour account may get banned if you forward more files(from private channels). Use at Own Risk!!"
+HELP_MSG="Available commands:-\n\n/index - To index a channel\n/forward - To start forwarding\n/total - Count total messages in DB\n/status - Check Current status\n/help - Help data\n/stop - To stop all running processes. \n\nUse /index to index messages from a channel to database.\n\nAfter indexing you can start forwarding by using /forward.\n\n<b>Note:</b>\nYou will require the following data to index a channel:-\n\n<b>Channel Invite Link</b>:- If channel is a Private channel User needs to join channel to acces the messages. Please note that do not leave channel until forwarding completes.\n\n<b>Channel ID</b>:- If channel is a private channel you may need to enter Channel ID. Get it from @ChannelidHEXbot.\n\n<b>SKIP_NO</b>:-From where you want to start Forwarding files.Give 0 if from starting\n\n<b>Caption</b>:- Custom Caption for forwarded files. Use 0 to use default captions."
+buttons=InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("Help", callback_data="help"),
+                InlineKeyboardButton("How Does This Works?", callback_data="abt")
+            ],
+            [
+                InlineKeyboardButton("Source Code", url="https://github.com/subinps/Forward_2.0"),
+                InlineKeyboardButton("Report a Bug", url="https://t.me/subinps")
+            ]
         ]
-
-    keyboard2=[
-        [InlineKeyboardButton("Private chat", url=f"t.me/{bot.username}?start")]
-    ]
-    
-    
-    if chat_type == enums.ChatType.PRIVATE:
-        await message.reply_text(
-            text = ad_text.format(user),
-            reply_markup = InlineKeyboardMarkup(keyboard1)
         )
 
-    elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
-        await message.reply_text(
-            text = "This command only to be used in private",
-            reply_markup = InlineKeyboardMarkup(keyboard2)
-        )
-        
-def get_file_id(msg):
-    if msg.media:
-        for message_type in (
-            "photo",
-            "animation",
-            "audio",
-            "document",
-            "video",
-            "video_note",
-            "voice",
-            "sticker"
-        ):
-            obj = getattr(msg, message_type)
-            if obj:
-                setattr(obj, "message_type", message_type)
-                return obj
+@Client.on_message(filters.private & filters.command('start'))
+async def start(client, message):
+    await client.send_message(
+        chat_id=message.chat.id,
+        text=START_MSG.format(
+                message.from_user.first_name),
+        reply_markup=buttons,
+        parse_mode="html")
 
 
-@Client.on_message(filters.command("id"))
-async def showid(client, message):
-    chat_type = message.chat.type
-    
-    if chat_type == enums.ChatType.PRIVATE:
-        
-        user_id = message.chat.id
-        first = message.from_user.first_name
-        last = message.from_user.last_name or ""
-        username = message.from_user.username
-        dc_id = message.from_user.dc_id or ""
-        await message.reply_text(
-            f"<b>➲ First Name:</b> {first}\n<b>➲ Last Name:</b> {last}\n<b>➲ Username:</b> @{username}\n<b>➲ Telegram ID:</b> <code>{user_id}</code>\n<b>➲ Data Centre:</b> <code>{dc_id}</code>",
-            quote=True
-        )
+@Client.on_message(filters.command("stop"))
+async def stop_button(bot, message):
 
-    elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
-        _id = ""
-        _id += (
-            "<b>➲ Chat ID</b>: "
-            f"<code>{message.chat.id}</code>\n"
-        )
-        if message.reply_to_message:
-            _id += (
-                "<b>➲ User ID</b>: "
-                f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
-                "<b>➲ Replied User ID</b>: "
-                f"<code>{message.reply_to_message.from_user.id if message.reply_to_message.from_user else 'Anonymous'}</code>\n"
-            )
-            file_info = get_file_id(message.reply_to_message)
-        else:
-            _id += (
-                "<b>➲ User ID</b>: "
-                f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
-            )
-            file_info = get_file_id(message)
-        if file_info:
-            _id += (
-                f"<b>{file_info.message_type}</b>: "
-                f"<code>{file_info.file_id}</code>\n"
-            )
-        await message.reply_text(
-            _id,
-            quote=True
-            )   
-    
-    
-       
-@Client.on_message(filters.command("send_group") & filters.private)
-async def broadcast(self, message):
-    user_id = message.from_user.id
-    if user_id in AUTH_USERS:
-        text = message.reply_to_message
-        groups = await db.get_all_chats()
-        if not text:
-            await message.reply_text("please reply to a message")
-            
-        else:
-            failed = 0
-            sent = 0
-            msg = await message.reply_text("sending broadcast...")
-            async for chat in groups:
-                if sent % 25 == 0:
-                    await asyncio.sleep(1)
-                try:
-                    await text.copy(chat["id"], text)
-                    sent += 1
-                except (PeerIdInvalid, ChannelInvalid):
-                    failed += 1
-                   
-            await msg.edit_text(
-                "Broadcast complete!\n"
-                f"{sent} groups succeed, {failed} groups failed to receive the message"
-            )
+    if str(message.from_user.id) not in Config.OWNER_ID:
+        return
+    msg = await bot.send_message(
+        text="Stoping all processes...",
+        chat_id=message.chat.id
+    )
+    await asyncio.sleep(1)
+    await msg.edit("All Processes Stopped and Restarted")
+    os.execl(sys.executable, sys.executable, *sys.argv)
+
+
+@Client.on_message(filters.private & filters.command('help'))
+async def help(client, message):
+    await client.send_message(
+        chat_id=message.chat.id,
+        text=HELP_MSG,
+        parse_mode="html")
+
+
+@Client.on_callback_query(filters.regex(r'^help$'))
+async def cb_help(bot, cb):
+    await cb.message.edit_text(HELP_MSG)
 
 
 
-    else:
-        await message.reply_text("you are not a authorised person to use this command")
-
-
-@Client.on_message(filters.command("add_chat") & filters.private)
-async def brodcasting(Client, message):
-    user_id = message.from_user.id
-    command = filters.command
-    if user_id not in AUTH_USERS:
-        await message.reply_text("you are not a authorised person to use this coammand")
-
-    else:
-        if len(command) > 2:
-            id = command.split("2:")
-            groups = await db.is_group_exist(id)
-            if groups == False:
-                await db.add_chat(id)
-            
-
-
-
-
-    
-
-
-    pass
-
-
-
-
-
-
-
-@Client.on_message(filters.command("chatlist") & filters.private)
-async def chatlist(self, message):
-        """ Send file of chat's I'm in """
-        chatfile = "List of chats.\n"
-        chat_lists = await db.get_all_chats()
-        async for chat in chat_lists:
-            chatfile += "{} - ({})\n".format(chat["title"],
-                                             chat["id"])
-
-        with BytesIO(str.encode(chatfile)) as output:
-            output.name = "chatlist.txt"
-            await message.reply_document(
-                document=output,
-                caption="Here is the list of chats in my database.",
-            )
+@Client.on_callback_query(filters.regex(r'^abt$'))   
+async def cb_abt(bot, cb):
+    await cb.message.edit_text("Talking is cheap, Read Code.",
+    reply_markup=InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("Source", url="https://github.com/subinps/Forward_2.0"),
+            ]
+        ]
+    )
+    )
