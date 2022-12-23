@@ -11,14 +11,13 @@ class Bot(Client):
 
     def __init__(self):
         super().__init__(
-           "Forwardbot",
-            api_hash=Config.API_HASH,
+           "Musicdownloader",
             api_id=Config.API_ID,
-            plugins={
-                "root": "plugins"
-            },
-            workers=10,
-            bot_token=Config.BOT_TOKEN
+            api_hash=Config.API_HASH,
+            bot_token=Config.BOT_TOKEN,
+            workers=50,
+            plugins={"root": "plugins"},
+            sleep_threshold=5,
         )
         self.LOGGER = LOGGER
 
@@ -36,7 +35,12 @@ class Bot(Client):
         self.LOGGER(__name__).info("Bot stopped. Bye.")
         
         
+
+
+        
 app = Bot()
+
+print("bot started")
 app.run()
         
         
