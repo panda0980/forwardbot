@@ -2,8 +2,6 @@ from pyrogram import Client, __version__
 
 from config import Config
 from config import LOGGER
-
-from user import User
 import pyromod.listen
 
 
