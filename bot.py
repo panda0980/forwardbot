@@ -2,7 +2,7 @@ from pyrogram import Client, __version__
 
 from config import Config
 from config import LOGGER
-import pyromod.listen
+from user import User
 
 
 class Bot(Client):
