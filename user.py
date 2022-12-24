@@ -10,7 +10,7 @@ from pyrogram import Client, __version__
 class User(Client):
     def __init__(self):
         super().__init__(
-            Config.SESSION,
+            session_string =Config.SESSION,
             api_hash=Config.API_HASH,
             api_id=Config.API_ID,
             workers=4
